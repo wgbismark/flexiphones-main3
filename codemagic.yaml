@@ -1,0 +1,34 @@
+workflows:
+  ios-release:
+    name: iOS Release
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: codemagic
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        provisioning_profiles:
+          - flexi-profile3
+        certificates:
+          - flexi-dist
+    scripts:
+      - name: Set up code signing
+        script: xcode-project use-profiles
+      - name: Get packages
+        script: flutter pub get
+      - name: Install pods
+        script: cd ios && pod install
+      - name: Build IPA
+        script: |
+          flutter build ipa --release \
+            --build-number=$BUILD_NUMBER \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
